@@ -1,15 +1,28 @@
 | Supported Targets | ESP32 |
 | ----------------- | ----- |
 
-## ESP-IDF BT-SPP-ACCEPTOR demo
+## ESP-IDF Bluetooth PPG PCG machine
 
-This example is to show how to use the APIs of **Serial Port Protocol** (**SPP**) to create an SPP acceptor which performs as a server. We aggregate **Secure Simple Pair** (**SSP**) into this demo to show how to use SPP when creating your own APPs. We also provide the demo `bt_spp_initiator` or the demo `bt_spp_vfs_initiator` to create an SPP initiator which performs as a client. In fact, you can create SPP acceptors and SPP initiators on a single device at the same time.
+This project is firmware for machine that measure PPG PCG signal from sensors and send data to phone and computer through bluetooth protocol using the APIs of **Serial Port Protocol** (**SPP**) 
 
-## How to use example
+## Structure of project
+project
+    |--component
+    |    |---esp_idf_lib_helpers
+    |    |---FileManager: manipulate sd card (Nguyen Nhu Hai Long, SEEE, HUST)
+    |    |---i2cdev: working with i2c devices (Uncle Rus)
+    |    |---MAX30102: driver of MAX30102 for esp-idf framework (Nguyen Doan Khanh, SEEE, HUST)
+    |--main
+    |    |---CMakeLists.txt
+    |    |---main.c
+    |--CMakeLists.txt
+    |--ESP32_SSP,md
+    |--README.md
+    |--sdkconfig
 
 ### Hardware Required
 
-This example is designed to run on commonly available ESP32 development board, e.g. ESP32-DevKitC. To operate the example, it should be connected to an SPP Initiator running on a smartphone, a computer or on another ESP32 development board.
+This project is designed to run on commonly available ESP32 development board, e.g. ESP32-DevKitC. To operate the example, it should be connected to an SPP Initiator running on a smartphone or a computer
 
 ### Configure the project
 
