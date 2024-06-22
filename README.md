@@ -6,6 +6,7 @@
 This project is firmware for machine that measure PPG PCG signal from sensors and send data to phone and computer through bluetooth protocol using the APIs of **Serial Port Protocol** (**SPP**) 
 
 ## Structure of project
+```
 project
     |--component
     |    |---esp_idf_lib_helpers
@@ -19,6 +20,7 @@ project
     |--ESP32_SSP,md
     |--README.md
     |--sdkconfig
+```
 
 ### Hardware Required
 
