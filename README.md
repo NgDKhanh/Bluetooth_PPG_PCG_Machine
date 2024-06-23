@@ -70,15 +70,20 @@ After the program starts, the machine will start to measure PPG signal by MAX301
 
 ## FAQ
 Q: Is this program measures data and send them through Bluetooth realtime ?
+
 A: Unfortunately, no :). It's really hard to send PPG and PCG data through Bluetooth realtime because measuring PPG and PCG signal requires a high frequent task. Sending data through Bluetooth make these tasks much slower, and then we can lost samples (which is really not good). Maybe there are solutions that I've not find out. I'll try my best. But at the moment, it cannot be realtime unfortunately.
 
 Below questions are about SPP (which I copied README.md from example of Espressif)
-Q: How to change the process of SSP?
+
+Q: How to change the process of SSP? 
+
 A: Users can set the IO Capability and Security Mask for their device (fixed Security Mode, Security Mode 4). In short, the Security Mask sets the security level for authentication stage and the IO Capability determines the way of user interaction during pairing. The default Security Mask of this demo is `ESP_SPP_SEC_AUTHENTICATE` which support MITM (Man In The Middle) protection. For more information about Security Simple Pair on ESP32, please refer to [ESP32_SSP](./ESP32_SSP.md).
 
 
-Q: How many SPP servers does ESP32 support?
+Q: How many SPP servers does ESP32 support? 
+
 A: For now, the maximum number of SPP servers is 6, which is limited by the maximum number of SDP records. When the SPP server is successfully started, the unique SCN (Server Channel Number) will be mapped to the SPP server.
 
-Q: Is SPP absolutely reliable?
+Q: Is SPP absolutely reliable? 
+
 A: For now, most Bluetooth stacks implement the SPP based on the L2CAP Basic Mode, and the reliability only depends on the controller. If errors(e.g. CRC) are missed by controller, the L2CAP packet will not be retransmitted, so it is recommended that you should implement the retransmission at the application layer. For more information about L2CAP operation modes, please refer to Bluetooth Core Specification, Version 4.2 or later, Volume 3, Part A: Logical Link Control and Adaptation Protocol Specification.# Bluetooth_PPG_PCG_Machine
