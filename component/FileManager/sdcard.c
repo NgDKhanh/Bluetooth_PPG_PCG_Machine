@@ -223,4 +223,11 @@ esp_err_t sdcard_deinitialize(const char* _mount_point, sdmmc_card_t *_sdcard, s
     return ESP_OK;
 }
 
+esp_err_t sdcard_checkFileNameExist(const char *nameFile)
+{
+    struct stat st;
+    char _nameFile[64];
+    sprintf(_nameFile, "%s/%s.txt", MOUNT_POINT, nameFile);
+    return (stat(nameFile, &st) == 0);
+}
 

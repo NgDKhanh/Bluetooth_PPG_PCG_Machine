@@ -42,15 +42,39 @@ static bool notify_state = false;
 #define DEVICE_NAME "ESP32_SPP_SERVER"
 #define TEST_DATA_SIZE 1024  // 1 KB
 
-#define LINES_TO_READ 25
+#define MAX_FILE_NUM 25
 
 static uint32_t spp_handle = 0;  // SPP handle for sending data
+
+static int8_t indexSDCardFileName;
+static char nameFilePPGSDCard[6];
+static char nameFilePCGSDCard[6];
+
+int8_t getIndexSDCardFileName(void)
+{
+    for (uint8_t indexFileName = 0; indexFileName < MAX_FILE_NUM; indexFileName++)
+    {
+        char nameFileToCheck[6];
+        memset(nameFileToCheck, 0, sizeof(nameFileToCheck));
+        sprintf(nameFileToCheck, "%s%hhd", "ppg", indexFileName);
+        if (!sdcard_checkFileNameExist(nameFileToCheck))
+        {
+            return indexFileName;
+            break;
+        }
+        else
+        {
+            ESP_LOGI(__func__, "File name %s.txt has existed.", nameFileToCheck);
+            continue;
+        }   
+    }
+    ESP_LOGW(__func__, "SD card full!");
+    return -1;
+}
 
 void send_spp_data(const char *data, size_t size) {
     if (spp_handle != 0) {
         esp_spp_write(spp_handle, size, (uint8_t *)data);
-        // ESP_LOGI(SPP_TAG, "Data sent: %d bytes", size);
-        // ESP_LOGI(SPP_TAG, "Data sent: %s", data);
     } else {
         ESP_LOGE(SPP_TAG, "No SPP connection available to send data");
     }
@@ -372,7 +396,7 @@ void saveINMPAndMAXToSDTask(void *parameter) {
             //Return Item
             // Serial.println("r");
             vRingbufferReturnItem(buf_handle_inm, (void *)item1);
-            sdcard_writeDataToFile_noArgument("pcg1", item1);
+            sdcard_writeDataToFile_noArgument(nameFilePCGSDCard, item1);
         } 
 
         //Receive an item from no-split MAX30102 ring buffer
@@ -383,7 +407,7 @@ void saveINMPAndMAXToSDTask(void *parameter) {
             //Return Item
             // Serial.println("rev");
             vRingbufferReturnItem(buf_handle_max, (void *)item2);
-            sdcard_writeDataToFile_noArgument("ppg1", item2);
+            sdcard_writeDataToFile_noArgument(nameFilePPGSDCard, item2);
         } 
 
         if (0x03 == stopSavingDataToSDCardFlag)
@@ -407,10 +431,17 @@ void timerCallback(TimerHandle_t xTimer) {
     // Add your code to handle the timer event here
 }
 
-
+/**
+ * @brief Read PCG data form SD card and send them through Bluetooth.
+ *      Data are form PCGx.txt file. Before sending pcg data, I will
+ *      send the line "PCG\n" first. After done sending, I will send 
+ *      the line "end PCG\n". This make receiver easy to differentiate
+ *      PPG and PCG data. 
+ * 
+ */
 void readPCGDataFromSDCardAndSendToBluetoothFunction() {
     char pathFile[64];
-    sprintf(pathFile, "%s/%s.txt", mount_point, "pcg1");
+    sprintf(pathFile, "%s/%s.txt", mount_point, nameFilePCGSDCard);
 
     ESP_LOGI(__func__, "Opening file %s...", pathFile);
     FILE *file = fopen(pathFile, "r");
@@ -429,7 +460,7 @@ void readPCGDataFromSDCardAndSendToBluetoothFunction() {
     while (measured_flag == false)
     {
         if (spp_handle && notify_state) {
-            send_spp_data("PCG data:", sizeof("PCG data:"));
+            send_spp_data("PCG\n", sizeof("PCG\n"));
             vTaskDelay(20);
 
             while (fread(dataBufferForSendingBluetooth, sizeof(char), sizeof(dataBufferForSendingBluetooth), file) != NULL)
@@ -442,7 +473,7 @@ void readPCGDataFromSDCardAndSendToBluetoothFunction() {
             fclose(file);
             measured_flag = true;
 
-            send_spp_data("end PCG:", sizeof("end PCG:"));
+            send_spp_data("end PCG\n", sizeof("end PCG\n"));
             vTaskDelay(20);
         }
         else 
@@ -453,9 +484,17 @@ void readPCGDataFromSDCardAndSendToBluetoothFunction() {
     }
 }
 
+/**
+ * @brief Read PPG data form SD card and send them through Bluetooth.
+ *      Data are form PPGx.txt file. Before sending pcg data, I will
+ *      send the line "PPG\n" first. After done sending, I will send 
+ *      the line "end PPG\n". This make receiver easy to differentiate
+ *      PPG and PCG data. 
+ * 
+ */
 void readPPGDataFromSDCardAndSendToBluetoothFunction() {
     char pathFile[64];
-    sprintf(pathFile, "%s/%s.txt", mount_point, "ppg1");
+    sprintf(pathFile, "%s/%s.txt", mount_point, nameFilePPGSDCard);
 
     ESP_LOGI(__func__, "Opening file %s...", pathFile);
     FILE *file = fopen(pathFile, "r");
@@ -474,7 +513,7 @@ void readPPGDataFromSDCardAndSendToBluetoothFunction() {
     while (measured_flag == false)
     {
         if (spp_handle && notify_state) {
-            send_spp_data("PPG data:", sizeof("PPG data:"));
+            send_spp_data("PPG\n", sizeof("PPG\n"));
             vTaskDelay(20);
 
             while (fread(dataBufferForSendingBluetooth, sizeof(char), sizeof(dataBufferForSendingBluetooth), file) != NULL)
@@ -487,7 +526,7 @@ void readPPGDataFromSDCardAndSendToBluetoothFunction() {
             fclose(file);
             measured_flag = true;
 
-            send_spp_data("end PPG:", sizeof("end PPG:"));
+            send_spp_data("end PPG\n", sizeof("end PPG\n"));
             vTaskDelay(20);
         }
         else 
@@ -550,6 +589,22 @@ void app_main(void) {
     /* We are using the semaphore for start sending data through Bluetooth */
     semaphoreAfterMearsuring_handle = xSemaphoreCreateBinary();
 
+    indexSDCardFileName = getIndexSDCardFileName();
+    if (indexSDCardFileName == -1)
+    {
+        ESP_LOGW(__func__, "Deleting file with index = 0!");
+        // Delete file
+        indexSDCardFileName = 0;
+    }
+    else
+    {
+        ESP_LOGI(__func__, "Index file name: %hhd", indexSDCardFileName);
+    }
+    
+
+    sprintf(nameFilePCGSDCard, "%s%hhd", "pcg", indexSDCardFileName);
+    sprintf(nameFilePPGSDCard, "%s%hhd", "ppg", indexSDCardFileName);    
+
     // Create tasks
     xTaskCreatePinnedToCore(max30102_test, "max30102_test", 1024 * 5, &readMAXTask_handle, 6, NULL, 0);
     xTaskCreatePinnedToCore(readINMP441Task, "readINM411", 1024 * 15, &readINMTask_handle, 6, NULL, 0);  // ?? Make max30102 task and inm task have equal priority can make polling cycle of max3012 shorter ??
@@ -560,9 +615,10 @@ void app_main(void) {
 
     if ( xSemaphoreTake (semaphoreAfterMearsuring_handle,  portMAX_DELAY) == pdTRUE )
     {
+        // Start SPP accepter
         startBluetoothTask();
         
-
+        // Read data from SD card and send them through Bluetooth
         readPPGDataFromSDCardAndSendToBluetoothFunction();
         readPCGDataFromSDCardAndSendToBluetoothFunction();
     }

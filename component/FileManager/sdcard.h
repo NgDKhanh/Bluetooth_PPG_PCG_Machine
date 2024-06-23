@@ -136,4 +136,6 @@ esp_err_t sdcard_renameFile(const char *oldNameFile, char *newNameFile);
 
 esp_err_t sdcard_removeFile(const char *nameFile);
 
+esp_err_t sdcard_checkFileNameExist(const char *nameFile);
+
 #endif
