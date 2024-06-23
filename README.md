@@ -63,15 +63,16 @@ idf.py -p PORT flash monitor
 
 See the [Getting Started Guide](https://docs.espressif.com/projects/esp-idf/en/latest/get-started/index.html) for full steps to configure and use ESP-IDF to build projects.
 
-## Example Description
+## Project Description
 
-After the program starts, the example will start an SPP acceptor. The example will calculate the data rate or just print the received data after the SPP connection is established. You can connect to the server and send data with another ESP32 development board, Andriod phone or computer which performs as the SPP initiator.
+After the program starts, the machine will start to measure PPG signal by MAX30102 sensor, PCG signal by INMP441 digital microphone. While measuring, there is a task that receive data from sensor and then store them into SD card. After 20s, a timer will be triggered, measuring and saving data into SD tasks will be delete. At this time, the program will start an SPP acceptor. It will read data that saved into SD card before and send them to Android phone or computer which poerforms as the SPP initiator.
 
-## Trouble shooting
-
-- To see the information of data, users shall set `SPP_SHOW_MODE` as `SPP_SHOW_DATA` or `SPP_SHOW_SPEED` in code(should be same with `bt_spp_initiator`, if the peer device runs it). When setting `SPP_SHOW_MODE` as `SPP_SHOW_DATA`, if the data rate is too high or the data length is too long, it is strongly recommended to process them in other lower priority application task rather than in this callback directly. Since the printing takes too much time, and it may stuck the Bluetooth stack.
 
 ## FAQ
+Q: Is this program measures data and send them through Bluetooth realtime ?
+A: Unfortunately, no :). It's really hard to send PPG and PCG data through Bluetooth realtime because measuring PPG and PCG signal requires a high frequent task. Sending data through Bluetooth make these tasks much slower, and then we can lost samples (which is really not good). Maybe there are solutions that I've not find out. I'll try my best. But at the moment, it cannot be realtime unfortunately.
+
+Below questions are about SPP (which I copied README.md from example of Espressif)
 Q: How to change the process of SSP?
 A: Users can set the IO Capability and Security Mask for their device (fixed Security Mode, Security Mode 4). In short, the Security Mask sets the security level for authentication stage and the IO Capability determines the way of user interaction during pairing. The default Security Mask of this demo is `ESP_SPP_SEC_AUTHENTICATE` which support MITM (Man In The Middle) protection. For more information about Security Simple Pair on ESP32, please refer to [ESP32_SSP](./ESP32_SSP.md).
 
