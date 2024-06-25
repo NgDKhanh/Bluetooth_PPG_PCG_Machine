@@ -228,6 +228,6 @@ esp_err_t sdcard_checkFileNameExist(const char *nameFile)
     struct stat st;
     char _nameFile[64];
     sprintf(_nameFile, "%s/%s.txt", MOUNT_POINT, nameFile);
-    return (stat(nameFile, &st) == 0);
+    return (stat(_nameFile, &st) == 0) ? ESP_OK : ESP_FAIL;
 }
 

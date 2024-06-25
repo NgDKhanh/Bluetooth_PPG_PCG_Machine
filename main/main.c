@@ -52,20 +52,21 @@ static char nameFilePCGSDCard[6];
 
 int8_t getIndexSDCardFileName(void)
 {
+    char nameFileToCheck[6];
     for (uint8_t indexFileName = 0; indexFileName < MAX_FILE_NUM; indexFileName++)
     {
-        char nameFileToCheck[6];
         memset(nameFileToCheck, 0, sizeof(nameFileToCheck));
         sprintf(nameFileToCheck, "%s%hhd", "ppg", indexFileName);
-        if (!sdcard_checkFileNameExist(nameFileToCheck))
-        {
-            return indexFileName;
-            break;
-        }
-        else
+        if (sdcard_checkFileNameExist(nameFileToCheck) == ESP_OK)
         {
             ESP_LOGI(__func__, "File name %s.txt has existed.", nameFileToCheck);
             continue;
+        }
+        else
+        {
+            ESP_LOGI(__func__, "File name %s.txt has not existed.", nameFileToCheck);
+            return indexFileName;
+            break;
         }   
     }
     ESP_LOGW(__func__, "SD card full!");
@@ -451,7 +452,7 @@ void readPCGDataFromSDCardAndSendToBluetoothFunction() {
         return;
     }
 
-    char dataBufferForSendingBluetooth[1500];
+    char dataBufferForSendingBluetooth[1300];
 
     memset(dataBufferForSendingBluetooth, 0, sizeof(dataBufferForSendingBluetooth));
 
@@ -504,7 +505,7 @@ void readPPGDataFromSDCardAndSendToBluetoothFunction() {
         return;
     }
 
-    char dataBufferForSendingBluetooth[1500];
+    char dataBufferForSendingBluetooth[1300];
 
     memset(dataBufferForSendingBluetooth, 0, sizeof(dataBufferForSendingBluetooth));
 
